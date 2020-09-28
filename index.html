@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<title>Всплывающие подсказки</title>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<link href="https://cdn.jsdelivr.net/npm/suggestions-jquery@20.3.0/dist/css/suggestions.min.css" rel="stylesheet" />
+	<script src="https://cdn.jsdelivr.net/npm/suggestions-jquery@20.3.0/dist/js/jquery.suggestions.min.js"></script>
+
+</head>
+
+<body>
+	<div class="container">
+	<h1 class="form_name">Форма для заполнения адреса.</h1>
+		<div class="row">
+			<div class="label"><label for="country">Страна:</label></div>
+			<div class="value"><input id="country" name="country" type="text" placeholder="Выбери страну"/></div>
+		</div>
+		<div class="row">
+			<input id="address" name="address" type="text" placeholder="Начни вводить адрес"/>
+		</div>
+		<div class="row">
+			<div class="label">
+				<label for="postal_code">Индекс</label>
+			</div>
+			<div class="value">
+				<input type="text" id="postal_code" class="fon_color" readonly>
+			</div>
+		</div>
+		<div class="row">
+			<div class="label">
+				<label for="region">Регион</label>
+			</div>
+			<div class="value">
+				<input type="text" id="region" class="fon_color" readonly>
+			</div>
+		</div>
+		<div class="row">
+			<div class="label">
+				<label for="city">Город</label>
+			</div>
+			<div class="value ">
+				<input type="text" id="city" class="fon_color" readonly>
+			</div>
+		</div>
+		<div class="row">
+			<div class="label">
+				<label for="street">Улица</label>
+			</div>
+			<div class="value">
+				<input type="text" id="street" class="fon_color" readonly>
+			</div>
+		</div>
+		<div class="row">
+			<div class="label">
+				<label for="house">Дом</label>
+			</div>
+			<div class="value">
+				<input type="text" id="house" class="fon_color" readonly>
+			</div>
+		</div>
+		<div class="row">
+			<div class="label">
+				<label for="flat">Квартира</label>
+			</div>
+			<div class="value">
+				<input type="text" id="flat" class="fon_color" readonly>
+			</div>
+		</div>
+		<div class="row">
+			<div class="label">
+				<label for="flat">Геокоорд.</label>
+			</div>
+			<div class="value">
+				<div id="geo"></div>
+			</div>
+		</div>
+	</div>
+	
+	<style>
+		html {
+			margin: 0 auto;
+			background: url(fon.jpg) no-repeat;
+			background-size: cover;
+					
+		}
+		.container {
+			margin: 20px auto;
+			width: 60%;
+			padding: 0 10px;
+			background-color:  rgba(129, 210, 239, 0.75);
+			border: 1px #4682B4 solid;
+			text-align: center;
+			color: #191970;
+		}
+		.fon_color {
+			background: #baddf1;
+		}
+		/*phone*/
+		@media (max-width:992px){
+			.container {
+				width: auto;
+			}
+			.container input {
+				width: 80%;
+				font-size: 20px;
+			}
+			.container #address {
+				font-size: 30px;
+			}
+		}
+			
+		.row {
+			padding-bottom: 7px;
+		}
+		.label {
+			font-weight: bold;
+		}
+		
+		#geo {
+			height: 30px;
+			background-color:  rgba(129, 210, 239, 0.75);
+		}
+			
+	</style>
+
+	<script>
+		var token = "34808531b14cec2b306cb271d80f69afc7efb9f7";
+		
+		var $country = $("#country");
+		$country.suggestions({
+		   token: token,
+		  type: "ADDRESS",
+		  constraints: {
+			locations: { country: "*" }
+		  },
+		  bounds: "country",
+		 });
+
+		function join(arr /*, separator */ ) {
+			var separator = arguments.length > 1 ? arguments[1] : ", ";
+			return arr.filter(function(n) {
+				return n
+			}).join(separator);
+		}
+
+		function geoQuality(qc_geo) {
+			var localization = {
+				"0": "точные",
+				"1": "ближайший дом",
+				"2": "улица",
+				"3": "населенный пункт",
+				"4": "город"
+			};
+			return localization[qc_geo] || qc_geo;
+		}
+
+		function geoLink(address) {
+			return join(["<a target=\"_blank\" href=\"",
+				"https://maps.yandex.ru/?text=",
+				address.geo_lat, ",", address.geo_lon, "\">",
+				address.geo_lat, ", ", address.geo_lon, "</a>"
+			], "");
+		}
+
+		function showPostalCode(address) {
+			$("#postal_code").val(address.postal_code);
+		}
+
+		function showRegion(address) {
+			$("#region").val(join([
+				join([address.region_type, address.region], " "),
+				join([address.area_type, address.area], " ")
+			]));
+		}
+
+		function showCity(address) {
+			$("#city").val(join([
+				join([address.city_type, address.city], " "),
+				join([address.settlement_type, address.settlement], " ")
+			]));
+		}
+
+		function showStreet(address) {
+			$("#street").val(
+				join([address.street_type, address.street], " ")
+			);
+		}
+
+		function showHouse(address) {
+			$("#house").val(join([
+				join([address.house_type, address.house], " "),
+				join([address.block_type, address.block], " ")
+			]));
+		}
+
+		function showFlat(address) {
+			$("#flat").val(
+				join([address.flat_type, address.flat], " ")
+			);
+		}
+
+		function showGeo(address) {
+			if (address.qc_geo != "5") {
+				var geo = geoLink(address) + " (" + geoQuality(address.qc_geo) + ")";
+				$("#geo").html(geo);
+			}
+		}
+
+		function showSelected(suggestion) {
+			var address = suggestion.data;
+			showPostalCode(address);
+			showRegion(address);
+			showCity(address);
+			showStreet(address);
+			showHouse(address);
+			showFlat(address);
+			showGeo(address);
+		}
+
+		$("#address").suggestions({
+			token: token,
+			type: "ADDRESS",
+			constraints: $country,
+			onSelect: showSelected
+		});
+
+
+	</script>
+</body>
+
+</html>
